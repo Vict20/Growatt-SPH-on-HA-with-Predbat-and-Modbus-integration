@@ -88,7 +88,8 @@ including the six extra time slots that newer firmware enables.
 
 1. **Modbus link.** Fit an RS485 to Modbus TCP adapter to the inverter's RS485
    port. This build uses an **Elfin EW11** on Wi-Fi, with the integration
-   connecting to port 8899. Its full settings are in
+   connecting to port 8899 (not the usual Modbus port 502, which didn't work
+   here). Its full settings are in
    [docs/ew11-setup.md](docs/ew11-setup.md). Give the adapter a fixed IP (a DHCP
    reservation is fine) and check you can read registers before going further.
 2. **Integration.** Install `0xAHA/Growatt_ModbusTCP` from HACS and add your

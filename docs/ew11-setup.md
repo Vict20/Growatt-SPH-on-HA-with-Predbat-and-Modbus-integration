@@ -48,6 +48,19 @@ network side and Modbus RTU on the RS485 side.
 
 In the Growatt_ModbusTCP integration, set the EW11's IP address and port 8899.
 
+> **Port 502 vs 8899.** Most guides say to use port **502**, the standard
+> Modbus TCP port. On this system the integration only worked on **8899**,
+> the port the EW11's `netp` socket listens on. If 502 doesn't connect, try
+> 8899, or whatever Local port your EW11 socket shows.
+
+## Wiring
+
+Connect the EW11's RS485 A and B to the inverter's RS485 terminals (A to A,
+B to B). Which terminals or pins those are **varies between SPH models and
+hardware revisions**. Check your inverter's manual or the label by the port
+before connecting, rather than copying another installation. If nothing
+reads, swapping A and B is the usual first fix.
+
 ## Tips
 
 - Only one thing should poll the inverter at a time. Max accept 3 allows extra
