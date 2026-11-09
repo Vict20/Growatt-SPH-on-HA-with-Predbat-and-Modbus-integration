@@ -1,0 +1,153 @@
+# OPTIONAL, read-only diagnostic. Captures a set of registers every 3 minutes
+# around dusk and writes them to the Logbook. Used to investigate a dusk dropout;
+# not needed for normal running.
+
+- id: '1792509501899'
+  alias: Growatt dusk capture
+  description: Read-only register capture every 3 min around dusk, logged to the Logbook
+  triggers:
+  - trigger: time_pattern
+    minutes: /3
+  conditions:
+  - condition: time
+    after: '16:20:00'
+    before: '18:05:00'
+  actions:
+  - action: growatt_modbus.get_register_data
+    continue_on_error: true
+    data:
+      device_id: YOUR_GROWATT_DEVICE_ID
+      register_type: input
+      start_address: 0
+      count: 11
+    response_variable: inp_a
+  - delay:
+      seconds: 2
+  - action: growatt_modbus.get_register_data
+    continue_on_error: true
+    data:
+      device_id: YOUR_GROWATT_DEVICE_ID
+      register_type: input
+      start_address: 1009
+      count: 6
+    response_variable: inp_b
+  - delay:
+      seconds: 2
+  - action: growatt_modbus.get_register_data
+    continue_on_error: true
+    data:
+      device_id: YOUR_GROWATT_DEVICE_ID
+      register_type: holding
+      start_address: 0
+      count: 22
+    response_variable: hold_a
+  - delay:
+      seconds: 2
+  - action: growatt_modbus.get_register_data
+    continue_on_error: true
+    data:
+      device_id: YOUR_GROWATT_DEVICE_ID
+      register_type: holding
+      start_address: 238
+      count: 1
+    response_variable: hold_b
+  - delay:
+      seconds: 2
+  - action: growatt_modbus.get_register_data
+    continue_on_error: true
+    data:
+      device_id: YOUR_GROWATT_DEVICE_ID
+      register_type: input
+      start_address: 37
+      count: 5
+    response_variable: inp_c
+  - delay:
+      seconds: 2
+  - action: growatt_modbus.get_register_data
+    continue_on_error: true
+    data:
+      device_id: YOUR_GROWATT_DEVICE_ID
+      register_type: input
+      start_address: 93
+      count: 13
+    response_variable: inp_d
+  - delay:
+      seconds: 2
+  - action: growatt_modbus.get_register_data
+    continue_on_error: true
+    data:
+      device_id: YOUR_GROWATT_DEVICE_ID
+      register_type: holding
+      start_address: 1008
+      count: 1
+    response_variable: hold_c
+  - delay:
+      seconds: 2
+  - action: growatt_modbus.get_register_data
+    continue_on_error: true
+    data:
+      device_id: YOUR_GROWATT_DEVICE_ID
+      register_type: holding
+      start_address: 9
+      count: 6
+    response_variable: hold_d
+  - delay:
+      seconds: 2
+  - action: growatt_modbus.get_register_data
+    continue_on_error: true
+    data:
+      device_id: YOUR_GROWATT_DEVICE_ID
+      register_type: holding
+      start_address: 82
+      count: 5
+    response_variable: hold_e
+  - delay:
+      seconds: 2
+  - action: growatt_modbus.get_register_data
+    continue_on_error: true
+    data:
+      device_id: YOUR_GROWATT_DEVICE_ID
+      register_type: holding
+      start_address: 30099
+      count: 2
+    response_variable: hold_f
+  - action: logbook.log
+    data:
+      name: Growatt capture
+      entity_id: automation.growatt_dusk_capture
+      message: '{% set a = inp_a[''values''] if inp_a is defined and inp_a[''success'']
+        else [] %} {% set b = inp_b[''values''] if inp_b is defined and inp_b[''success'']
+        else [] %} {% set h = hold_a[''values''] if hold_a is defined and hold_a[''success'']
+        else [] %} {% set f = hold_b[''values''] if hold_b is defined and hold_b[''success'']
+        else [] %} {% set e = inp_c[''values''] if inp_c is defined and inp_c[''success'']
+        else [] %} {% set d = inp_d[''values''] if inp_d is defined and inp_d[''success'']
+        else [] %} {% set c = hold_c[''values''] if hold_c is defined and hold_c[''success'']
+        else [] %} {% set v1 = hold_d[''values''] if hold_d is defined and hold_d[''success'']
+        else [] %} {% set v2 = hold_e[''values''] if hold_e is defined and hold_e[''success'']
+        else [] %} {% set p = hold_f[''values''] if hold_f is defined and hold_f[''success'']
+        else [] %} status={{ a[0] if a|length > 8 else ''n/a'' }} | PV1 {{ (a[3]/10)|round(1)
+        if a|length > 8 else ''n/a'' }} V {{ (a[4]/10)|round(1) if a|length > 8 else
+        ''n/a'' }} A | PV2 {{ (a[7]/10)|round(1) if a|length > 8 else ''n/a'' }} V
+        {{ (a[8]/10)|round(1) if a|length > 8 else ''n/a'' }} A | batt discharge {{
+        ((b[0]*65536+b[1])/10)|round(0) if b|length > 3 else ''n/a'' }} W charge {{
+        ((b[2]*65536+b[3])/10)|round(0) if b|length > 3 else ''n/a'' }} W | Vbat {{
+        (b[4]/10)|round(1) if b|length > 5 else ''n/a'' }} V SOC {{ b[5] if b|length
+        > 5 else ''n/a'' }} % | H0={{ h[0] if h|length > 21 else ''n/a'' }} H1={{
+        h[1] if h|length > 21 else ''n/a'' }} H2={{ h[2] if h|length > 21 else ''n/a''
+        }} H8={{ h[8] if h|length > 21 else ''n/a'' }} H17-21={{ h[17:22]|join('','')
+        if h|length > 21 else ''n/a'' }} | H238={{ f[0] if f|length > 0 else ''n/a''
+        }} | H1008={{ c[0] if c|length > 0 else ''n/a'' }} bit13={{ ((c[0] // 8192)
+        % 2) if c|length > 0 else ''n/a'' }} | grid {{ (e[1]/10)|round(1) if e|length
+        > 4 else ''n/a'' }} V {{ (e[0]/100)|round(2) if e|length > 4 else ''n/a''
+        }} Hz {{ (e[2]/10)|round(1) if e|length > 4 else ''n/a'' }} A {{ ((e[3]*65536+e[4])/10)|round(0)
+        if e|length > 4 else ''n/a'' }} W | temp inv {{ (d[0]/10)|round(1) if d|length
+        > 12 else ''n/a'' }} ipm {{ (d[1]/10)|round(1) if d|length > 12 else ''n/a''
+        }} boost {{ (d[2]/10)|round(1) if d|length > 12 else ''n/a'' }} | derate {{
+        d[11] if d|length > 12 else ''n/a'' }} fault {{ d[12] if d|length > 12 else
+        ''n/a'' }} | ver9-14={{ v1 }} ver82-86={{ v2 }} | 30099-30100={{ p }} | raw
+        in={{ a }} bat={{ b }} | PV power PV1 {{ ((a[5]*65536+a[6])/10)|round(1) if
+        a|length > 10 else ''n/a'' }} W PV2 {{ ((a[9]*65536+a[10])/10)|round(1) if
+        a|length > 10 else ''n/a'' }} W'
+  trace:
+    stored_traces: 40
+  mode: single

@@ -1,0 +1,89 @@
+# Phone notifications. Replace notify.mobile_app_your_phone with your own
+# (Developer Tools -> Actions, search notify.mobile_app).
+
+- id: '1786727055747'
+  alias: Low Battery Alert
+  triggers:
+  - trigger: numeric_state
+    entity_id: sensor.growatt_battery_battery_soc
+    below: 20
+    for:
+      minutes: 1
+  conditions: []
+  actions:
+  - action: notify.mobile_app_your_phone
+    continue_on_error: true
+    data:
+      title: Low Battery
+      message: 'Battery is below 20% ({{ states(''sensor.growatt_battery_battery_soc'')
+        }}% remaining)
+
+        '
+  mode: single
+- id: '1787054505112'
+  alias: Growatt Modbus Connection Lost
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.growatt_inverter_online
+    to: 'off'
+    for:
+      minutes: 5
+  conditions: []
+  actions:
+  - action: notify.mobile_app_your_phone
+    data:
+      title: ⚠️ Growatt Modbus Offline
+      message: 'Local inverter connection has been down for 5+ minutes. Predbat is
+        likely running on stale data and unable to control the inverter.
+
+        '
+  mode: single
+- id: '1787061291568'
+  alias: Growatt Modbus Connection Restored
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.growatt_inverter_online
+    to: 'on'
+  conditions:
+  - condition: template
+    value_template: '{{ (as_timestamp(now()) - as_timestamp(trigger.from_state.last_changed))
+      > 300 }}
+
+      '
+  actions:
+  - action: notify.mobile_app_your_phone
+    data:
+      title: ✅ Growatt Modbus Restored
+      message: Local inverter connection is back online.
+  mode: single
+- id: '1792078674482'
+  alias: Predbat status notification
+  description: Replaces Predbat's built-in status-change message so Demand reads as
+    Free Running
+  triggers:
+  - trigger: state
+    entity_id: predbat.status
+  conditions:
+  - alias: Only a real state change (not attribute updates or start-up)
+    condition: template
+    value_template: "{{ trigger.from_state is not none\n   and trigger.from_state.state
+      != trigger.to_state.state\n   and trigger.from_state.state not in ['unknown',
+      'unavailable']\n   and trigger.to_state.state not in ['unknown', 'unavailable']
+      }}\n"
+  - alias: Don't repeat consecutive errors
+    condition: template
+    value_template: '{{ not (trigger.to_state.state.startswith(''Error'') and trigger.from_state.state.startswith(''Error''))
+      }}
+
+      '
+  actions:
+  - action: notify.mobile_app_your_phone
+    continue_on_error: true
+    data:
+      title: Predbat
+      message: 'Predbat status change to: {{ ''Free Running'' if trigger.to_state.state
+        == ''Demand'' else trigger.to_state.state }}{{ '' '' ~ trigger.to_state.attributes.get(''detail'')
+        if trigger.to_state.attributes.get(''detail'') else '''' }}
+
+        '
+  mode: queued

@@ -1,0 +1,107 @@
+# Helpers and supporting config for Predbat + Growatt SPH (local Modbus).
+#
+# Easiest install: save this as a package, e.g. config/packages/growatt_predbat.yaml,
+# and add to configuration.yaml:
+#
+#   homeassistant:
+#     packages: !include_dir_named packages
+#
+# Or create the same helpers in the UI (Settings -> Devices & services -> Helpers);
+# the entity IDs must match what predbat/apps.yaml and the automations use.
+
+# --- Predbat's window helpers -------------------------------------------------
+# Predbat writes its charge / export windows into these; the window-writer
+# automations commit them to the inverter. Time only, no date.
+input_datetime:
+  predbat_bf3_charge_start:
+    name: Predbat BF3 Charge Start
+    has_date: false
+    has_time: true
+  predbat_bf3_charge_end:
+    name: Predbat BF3 Charge End
+    has_date: false
+    has_time: true
+  predbat_gf3_discharge_start:
+    name: Predbat GF3 Discharge Start
+    has_date: false
+    has_time: true
+  predbat_gf3_discharge_end:
+    name: Predbat GF3 Discharge End
+    has_date: false
+    has_time: true
+
+# --- Rate helpers ---------------------------------------------------------------
+# Predbat writes rates in W; the rate-bridge automations convert to the
+# inverter's percentage. Max values are for an SPH3600 with ~3 kW battery rate.
+input_number:
+  predbat_growatt_charge_rate_w:
+    name: "Predbat Growatt Charge Rate (W)"
+    min: 0
+    max: 3000
+    step: 10
+    unit_of_measurement: "W"
+    mode: box
+  predbat_growatt_discharge_rate_w:
+    name: "Predbat Growatt Discharge Rate (W)"
+    min: 0
+    max: 3600
+    step: 10
+    unit_of_measurement: "W"
+    mode: box
+  # apps.yaml points discharge_rate here, so Predbat's discharge rate is NOT
+  # passed to the inverter (the inverter keeps its own setting). Point
+  # discharge_rate at predbat_growatt_discharge_rate_w instead if you want it bridged.
+  predbat_growatt_discharge_rate_fixed:
+    name: "Predbat Growatt Discharge Rate (fixed)"
+    min: 0
+    max: 3000
+    step: 1
+    unit_of_measurement: "W"
+    mode: box
+
+# --- Signed power sensors for Predbat -----------------------------------------
+# Predbat wants one signed battery power and one signed grid power.
+# Battery: positive = discharging. Grid: positive = exporting.
+template:
+  - sensor:
+      - name: "Growatt Battery Power Signed Local"
+        unique_id: growatt_battery_power_signed_local
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {{ (states('sensor.growatt_battery_battery_discharge_power') | float(0))
+             - (states('sensor.growatt_battery_battery_charge_power') | float(0)) }}
+      - name: "Growatt Grid Power Signed Local"
+        unique_id: growatt_grid_power_signed_local
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {{ (states('sensor.growatt_grid_grid_export_power') | float(0))
+             - (states('sensor.growatt_grid_grid_import_power') | float(0)) }}
+
+# --- Keep the database small ---------------------------------------------------
+# Predbat's plan entities carry very large attributes; don't record them.
+recorder:
+  exclude:
+    entities:
+      - predbat.plan_html
+      - predbat.soc_kw_best
+      - predbat.battery_cycle_best
+      - predbat.best_load_energy
+      - predbat.load_energy
+      - predbat.soc_kw_base10
+      - predbat.soc_kw_best10
+      - predbat.pv_energy
+      - predbat.load_power_best
+      - predbat.battery_cycle
+      - predbat.soc_kw
+
+# --- Logging -------------------------------------------------------------------
+# Debug logging is what tools/check_growatt_writes.py reads ([WRITE_MULTI] lines).
+# It is chatty (~4,000 lines/hour); turn it off once you trust your setup.
+logger:
+  default: warning
+  logs:
+    custom_components.growatt_modbus: debug

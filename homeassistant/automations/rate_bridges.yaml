@@ -1,0 +1,33 @@
+# Predbat writes charge/discharge rates in W; the Growatt takes a percentage.
+# 3000 = the battery's max rate in W on this system; change to yours.
+
+- id: '1787412350288'
+  alias: Growatt Charge Rate W to Percent Bridge
+  triggers:
+  - trigger: state
+    entity_id: input_number.predbat_growatt_charge_rate_w
+  conditions: []
+  actions:
+  - action: number.set_value
+    target:
+      entity_id: number.growatt_battery_charge_power_rate
+    data:
+      value: '{{ (trigger.to_state.state | float(0) / 3000 * 100) | round(0) }}
+
+        '
+  mode: single
+- id: '1787412374165'
+  alias: Growatt Discharge Rate W to Percent Bridge
+  triggers:
+  - trigger: state
+    entity_id: input_number.predbat_growatt_discharge_rate_w
+  conditions: []
+  actions:
+  - action: number.set_value
+    target:
+      entity_id: number.growatt_battery_discharge_power_rate
+    data:
+      value: '{{ (trigger.to_state.state | float(0) / 3000 * 100) | round(0) }}
+
+        '
+  mode: single

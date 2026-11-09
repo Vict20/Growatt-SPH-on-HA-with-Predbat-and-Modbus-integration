@@ -1,0 +1,9 @@
+# Never commit these: they contain serial numbers, keys or personal data
+secrets.yaml
+*.log
+*.csv
+*.db
+*.db-*
+.storage/
+pb_window.txt
+__pycache__/

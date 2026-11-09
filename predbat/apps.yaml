@@ -1,0 +1,157 @@
+pred_bat:
+  module: predbat
+  class: PredBat
+  prefix: predbat
+  timezone: Europe/London
+  currency_symbols:
+  - '£'
+  - 'p'
+  threads: auto
+  forecast_hours: 48
+
+  num_inverters: 1
+  inverter_type: "GROWATTSPH"
+  
+  inverter_mode:
+  - select.predbat_inverter_mode
+
+  inverter:
+    name: "Growatt SPH (local Modbus)"
+    has_rest_api: False
+    has_mqtt_api: False
+    has_service_api: False
+    output_charge_control: "power"
+    has_charge_enable_time: false
+    has_discharge_enable_time: false
+    has_ge_inverter_mode: false
+    has_target_soc: True
+    has_reserve_soc: True
+    charge_time_format: "S"
+    charge_time_entity_is_option: False
+    soc_units: "%"
+    num_load_entities: 1
+    time_button_press: False
+    clock_time_format: "%H:%M:%S"
+    write_and_poll_sleep: 2
+    has_time_window: True
+    support_charge_freeze: False
+    support_discharge_freeze: False
+
+  soc_max:
+  - 12
+  battery_rate_max:
+  - 3000
+  inverter_limit: 3600
+  inverter_limit_charge:
+  - 3000
+  inverter_limit_discharge:
+  - 3600
+  set_reserve_min: 15
+
+  soc_percent:
+  - sensor.growatt_battery_battery_soc
+  pv_power:
+  - sensor.growatt_solar_solar_total_power
+  load_power:
+  - sensor.growatt_load_house_consumption
+  battery_power:
+  - sensor.growatt_battery_power_signed_local
+  grid_power:
+  - sensor.growatt_grid_power_signed_local
+
+  pv_today:
+  - sensor.growatt_solar_energy_today
+  load_today:
+  - sensor.growatt_load_load_energy_today
+  import_today:
+  - sensor.growatt_grid_grid_import_energy_today
+  export_today:
+  - sensor.growatt_grid_energy_to_grid_today
+
+  # Windows: Predbat writes these helpers; the BF3/GF3 automations
+  # commit them to the inverter as one atomic [start, end, enable] write.
+  charge_start_time:
+  - input_datetime.predbat_bf3_charge_start
+  charge_end_time:
+  - input_datetime.predbat_bf3_charge_end
+
+  discharge_start_time:
+  - input_datetime.predbat_gf3_discharge_start
+  discharge_end_time:
+  - input_datetime.predbat_gf3_discharge_end
+
+  charge_rate:
+  - input_number.predbat_growatt_charge_rate_w
+  charge_limit:
+  - number.growatt_battery_charge_stopped_soc
+  target_soc:
+  - number.growatt_battery_charge_stopped_soc
+  reserve:
+  - number.growatt_battery_discharge_stopped_soc
+  discharge_rate:
+  - input_number.predbat_growatt_discharge_rate_fixed
+
+  solcast_api_key: !secret solcast_api_key
+  octopus_api_key: !secret octopus_api_key
+  octopus_api_account: "A-XXXXXXXX"   # your Octopus account number
+  octopus_automatic: true
+  octopus_free_url: 'http://octopus.energy/free-electricity'
+  solcast_poll_hours: 4.0
+  solcast_sites:
+    - 'xxxx-xxxx-xxxx-xxxx'   # your Solcast rooftop site ID
+
+  ohme_login: !secret ohme_username
+  ohme_password: !secret ohme_password
+  ohme_automatic: true
+  
+  num_cars: 1
+  car_charging_energy:
+    - sensor.predbat_ohme_energy_today
+    - sensor.car_2_charging_energy_today
+  car_charging_power:
+    - sensor.ohme_home_go_power
+  # --- Plan stability settings (reduce register write churn) ---
+  calculate_export_within_charge_slots: False
+  metric_battery_cycle: 0.5
+  metric_min_improvement_export: 5
+  charge_low_power: False
+  
+  battery_scaling_auto: true
+
+  # Tariff comparison feature
+  #
+  # Adjust this list to the tariffs you want to compare, include your current tariff also
+  # DNO region code (see https://energy-stats.uk/dno-region-codes-explained/)
+  dno_region: "A"
+  compare_list:
+  - id: 'current'
+    name: 'Current Tariff'
+  - id: 'cap_seg'
+    name: 'Price cap import/SEG export'
+    rates_import:
+    - rate: 24.86
+    rates_export:
+    - rate: 4.1
+  - id: 'eon_next_drive'
+    name: 'Eon Next Drive import/Fixed export'
+    rates_import:
+    - rate: 6.7
+      start: "00:00:00"
+      end: "07:00:00"
+    - rate: 24.86
+      start: "07:00:00"
+      end: "00:00:00"
+    rates_export:
+    - rate: 16.5
+  - id: 'igo_fixed'
+    name: 'Intelligent GO import/Fixed export'
+    rates_import_octopus_url: 'https://api.octopus.energy/v1/products/INTELLI-VAR-24-10-29/electricity-tariffs/E-1R-INTELLI-VAR-24-10-29-{dno_region}/standard-unit-rates/'
+    rates_export_octopus_url: 'https://api.octopus.energy/v1/products/OUTGOING-VAR-24-10-26/electricity-tariffs/E-1R-OUTGOING-VAR-24-10-26-{dno_region}/standard-unit-rates/'
+  - id: 'igo_agile'
+    name: 'Intelligent GO import/Agile export'
+    rates_import_octopus_url: 'https://api.octopus.energy/v1/products/INTELLI-VAR-24-10-29/electricity-tariffs/E-1R-INTELLI-VAR-24-10-29-{dno_region}/standard-unit-rates/'
+    rates_export_octopus_url: 'https://api.octopus.energy/v1/products/AGILE-OUTGOING-19-05-13/electricity-tariffs/E-1R-AGILE-OUTGOING-19-05-13-{dno_region}/standard-unit-rates/'
+  - id: 'agile_agile'
+    name: 'Agile import/Agile export'
+    rates_import_octopus_url: 'https://api.octopus.energy/v1/products/AGILE-24-10-01/electricity-tariffs/E-1R-AGILE-24-10-01-{dno_region}/standard-unit-rates/'
+    rates_export_octopus_url: 'https://api.octopus.energy/v1/products/AGILE-OUTGOING-19-05-13/electricity-tariffs/E-1R-AGILE-OUTGOING-19-05-13-{dno_region}/standard-unit-rates/'

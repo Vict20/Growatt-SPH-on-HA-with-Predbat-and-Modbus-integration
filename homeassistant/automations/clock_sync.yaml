@@ -1,0 +1,17 @@
+# Keeps the inverter's clock in step with HA (the TOU slots run on the inverter clock).
+
+- id: '1788011771558'
+  alias: Growatt — Weekly clock sync
+  description: Syncs the inverter's RTC to Home Assistant's clock once a week
+  triggers:
+  - at: 06:00:00
+    trigger: time
+  conditions:
+  - condition: time
+    weekday:
+    - sun
+  actions:
+  - action: growatt_modbus.sync_inverter_time
+    data:
+      device_id: YOUR_GROWATT_DEVICE_ID
+  mode: single

@@ -1,0 +1,185 @@
+# Predbat -> Growatt window writers.
+# Predbat writes four input_datetime helpers; these two automations commit each
+# window to the inverter as ONE atomic [start, end, enable] write.
+# Replace YOUR_GROWATT_DEVICE_ID with the device ID of your inverter in HA
+# (Settings -> Devices -> your Growatt -> the ID in the URL).
+
+- id: '1788447932032'
+  alias: Predbat GF3 export (Grid First slot 9)
+  description: 'Commits Predbat''s export window to the Growatt as one atomic write.
+    Trims this slot''s end to the opposing slot''s start when they would overlap by
+    only the margin Predbat adds (5 minutes or less), so the opposing slot is not
+    disabled. Disable-first only fires when the slots really overlap, and writes [0,
+    0, 0]. A zero write is skipped when this slot already reads Disabled.
+
+    '
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_datetime.predbat_gf3_discharge_start
+    - input_datetime.predbat_gf3_discharge_end
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.to_state.state.count('':'') == 2 }}
+
+      '
+  - condition: template
+    value_template: "{{ states('input_datetime.predbat_gf3_discharge_start') not in
+      ['unknown', 'unavailable']\n   and states('input_datetime.predbat_gf3_discharge_end')
+      not in ['unknown', 'unavailable'] }}\n"
+  actions:
+  - delay:
+      seconds: 8
+  - variables:
+      start_state: '{{ states(''input_datetime.predbat_gf3_discharge_start'') }}'
+      end_state: '{{ states(''input_datetime.predbat_gf3_discharge_end'') }}'
+      opp_start_state: '{{ states(''input_datetime.predbat_bf3_charge_start'') }}'
+      opp_end_state: '{{ states(''input_datetime.predbat_bf3_charge_end'') }}'
+  - if:
+    - condition: template
+      value_template: '{{ start_state.count('':'') == 2 and end_state.count('':'')
+        == 2 }}
+
+        '
+      alias: Re-check after the delay - state may have changed during the wait
+    then:
+    - variables:
+        enable_val: '{{ 0 if start_state == end_state else 1 }}'
+        s_min: '{{ start_state[0:2] | int(0) * 60 + start_state[3:5] | int(0) }}'
+        e_min: '{{ end_state[0:2] | int(0) * 60 + end_state[3:5] | int(0) }}'
+        os_min: '{{ opp_start_state[0:2] | int(0) * 60 + opp_start_state[3:5] | int(0)
+          }}'
+        oe_min: '{{ opp_end_state[0:2] | int(0) * 60 + opp_end_state[3:5] | int(0)
+          }}'
+        opp_valid: "{{ opp_start_state.count(':') == 2 and opp_end_state.count(':')
+          == 2\n   and os_min != oe_min }}\n"
+        trim: "{{ enable_val == 1 and opp_valid and (os_min - 1) > s_min\n   and e_min
+          > s_min and 0 < (e_min - os_min) <= 5 }}\n"
+        e_eff: '{{ (os_min - 1) if trim else e_min }}'
+        start_reg: '{{ (s_min // 60) * 256 + (s_min % 60) }}'
+        end_reg: '{{ (e_eff // 60) * 256 + (e_eff % 60) }}'
+        overlap: "{{ (e_min <= s_min)\n   or ((oe_min <= os_min) and (os_min < e_eff
+          or s_min < oe_min))\n   or ((oe_min > os_min) and (s_min < oe_min) and (os_min
+          < e_eff)) }}\n"
+    - if:
+      - condition: template
+        value_template: "{{ enable_val == 1\n   and is_state('select.growatt_battery_time_period_3_enable',
+          'Enabled')\n   and ((not opp_valid) or overlap) }}\n"
+      then:
+      - action: growatt_modbus.write_registers
+        data:
+          device_id: YOUR_GROWATT_DEVICE_ID
+          register: 1106
+          values:
+          - 0
+          - 0
+          - 0
+        alias: Disable BF3 first - only when it really overlaps
+      - delay:
+          seconds: 2
+        alias: Let the disable settle before the real write
+    - if:
+      - condition: template
+        value_template: '{{ not (enable_val == 0 and is_state(''select.growatt_battery_grid_first_time_period_9_enable'',
+          ''Disabled'')) }}
+
+          '
+        alias: Skip a zero write when this slot already reads Disabled
+      then:
+      - action: growatt_modbus.write_registers
+        data:
+          device_id: YOUR_GROWATT_DEVICE_ID
+          register: 1086
+          values: '[{{ start_reg }}, {{ end_reg }}, {{ enable_val }}]'
+        alias: The real write - atomic [start, end, enable] to registers 1086-1088
+  mode: restart
+- id: '1788447986995'
+  alias: Predbat BF3 charge (Battery First slot 3)
+  description: 'Commits Predbat''s charge window to the Growatt as one atomic write.
+    Trims this slot''s end to the opposing slot''s start when they would overlap by
+    only the margin Predbat adds (5 minutes or less), so the opposing slot is not
+    disabled. Disable-first only fires when the slots really overlap, and writes [0,
+    0, 0]. A zero write is skipped when this slot already reads Disabled.
+
+    '
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_datetime.predbat_bf3_charge_start
+    - input_datetime.predbat_bf3_charge_end
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.to_state.state.count('':'') == 2 }}
+
+      '
+  - condition: template
+    value_template: "{{ states('input_datetime.predbat_bf3_charge_start') not in ['unknown',
+      'unavailable']\n   and states('input_datetime.predbat_bf3_charge_end') not in
+      ['unknown', 'unavailable'] }}\n"
+  actions:
+  - delay:
+      seconds: 16
+  - variables:
+      start_state: '{{ states(''input_datetime.predbat_bf3_charge_start'') }}'
+      end_state: '{{ states(''input_datetime.predbat_bf3_charge_end'') }}'
+      opp_start_state: '{{ states(''input_datetime.predbat_gf3_discharge_start'')
+        }}'
+      opp_end_state: '{{ states(''input_datetime.predbat_gf3_discharge_end'') }}'
+  - if:
+    - condition: template
+      value_template: '{{ start_state.count('':'') == 2 and end_state.count('':'')
+        == 2 }}
+
+        '
+      alias: Re-check after the delay - state may have changed during the wait
+    then:
+    - variables:
+        enable_val: '{{ 0 if start_state == end_state else 1 }}'
+        s_min: '{{ start_state[0:2] | int(0) * 60 + start_state[3:5] | int(0) }}'
+        e_min: '{{ end_state[0:2] | int(0) * 60 + end_state[3:5] | int(0) }}'
+        os_min: '{{ opp_start_state[0:2] | int(0) * 60 + opp_start_state[3:5] | int(0)
+          }}'
+        oe_min: '{{ opp_end_state[0:2] | int(0) * 60 + opp_end_state[3:5] | int(0)
+          }}'
+        opp_valid: "{{ opp_start_state.count(':') == 2 and opp_end_state.count(':')
+          == 2\n   and os_min != oe_min }}\n"
+        trim: "{{ enable_val == 1 and opp_valid and (os_min - 1) > s_min\n   and e_min
+          > s_min and 0 < (e_min - os_min) <= 5 }}\n"
+        e_eff: '{{ (os_min - 1) if trim else e_min }}'
+        start_reg: '{{ (s_min // 60) * 256 + (s_min % 60) }}'
+        end_reg: '{{ (e_eff // 60) * 256 + (e_eff % 60) }}'
+        overlap: "{{ (e_min <= s_min)\n   or ((oe_min <= os_min) and (os_min < e_eff
+          or s_min < oe_min))\n   or ((oe_min > os_min) and (s_min < oe_min) and (os_min
+          < e_eff)) }}\n"
+    - if:
+      - condition: template
+        value_template: "{{ enable_val == 1\n   and is_state('select.growatt_battery_grid_first_time_period_9_enable',
+          'Enabled')\n   and ((not opp_valid) or overlap) }}\n"
+      then:
+      - action: growatt_modbus.write_registers
+        data:
+          device_id: YOUR_GROWATT_DEVICE_ID
+          register: 1086
+          values:
+          - 0
+          - 0
+          - 0
+        alias: Disable GF3 first - only when it really overlaps
+      - delay:
+          seconds: 2
+        alias: Let the disable settle before the real write
+    - if:
+      - condition: template
+        value_template: '{{ not (enable_val == 0 and is_state(''select.growatt_battery_time_period_3_enable'',
+          ''Disabled'')) }}
+
+          '
+        alias: Skip a zero write when this slot already reads Disabled
+      then:
+      - action: growatt_modbus.write_registers
+        data:
+          device_id: YOUR_GROWATT_DEVICE_ID
+          register: 1106
+          values: '[{{ start_reg }}, {{ end_reg }}, {{ enable_val }}]'
+        alias: The real write - atomic [start, end, enable] to registers 1106-1108
+  mode: restart
