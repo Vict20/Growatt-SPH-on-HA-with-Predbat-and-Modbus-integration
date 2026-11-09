@@ -49,8 +49,8 @@ That layer is the main thing this repo provides.
 
 ### Why local Modbus rather than the Growatt cloud
 
-The Growatt cloud integration (`growatt_server`) is still installed on this
-system but **disabled**. Control moved to local Modbus because:
+This system started on the Growatt cloud integration (`growatt_server`) and
+moved to local Modbus. The cloud integration is no longer used. The reasons:
 
 - **Speed.** Local reads take seconds, and writes land and can be read back
   straight away. Cloud data lags by minutes and writes go via Growatt's servers.
