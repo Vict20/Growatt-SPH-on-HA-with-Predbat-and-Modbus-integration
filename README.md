@@ -22,7 +22,7 @@ a finished product. Read it, understand it, and adapt it to your system.
 | Battery | 2 × Growatt GBLI6532 (6.5 kWh each, about 12 kWh usable) |
 | Link | Elfin EW11 RS485 to Wi-Fi adapter (Modbus TCP, port 8899) on the inverter's RS485 port |
 | HA | Home Assistant OS on an x86 mini PC |
-| Integration | [0xAHA/Growatt_ModbusTCP](https://github.com/0xAHA/Growatt_ModbusTCP) via HACS (2.0.7-b8 at the time of writing) |
+| Integration | [0xAHA/Growatt_ModbusTCP](https://github.com/0xAHA/Growatt_ModbusTCP) via the HA Marketplace, formerly HACS (2.0.7-b8 at the time of writing) |
 | Optimiser | Predbat add-on, `inverter_type: GROWATTSPH` |
 | Tariff | Octopus Intelligent import, Agile export |
 | Forecast | Solcast (hobbyist account) |
@@ -92,7 +92,7 @@ including the six extra time slots that newer firmware enables.
    here). Its full settings are in
    [docs/ew11-setup.md](docs/ew11-setup.md). Give the adapter a fixed IP (a DHCP
    reservation is fine) and check you can read registers before going further.
-2. **Integration.** Install `0xAHA/Growatt_ModbusTCP` from HACS and add your
+2. **Integration.** Install `0xAHA/Growatt_ModbusTCP` from the Marketplace (formerly HACS) and add your
    inverter. Leave VPP control authority **off** and protocol variant on **Auto**.
    Check your entity names in Developer Tools → States. This repo uses the
    integration's `sensor.growatt_<group>_<name>` pattern.
