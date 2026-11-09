@@ -20,7 +20,7 @@ a finished product. Read it, understand it, and adapt it to your system.
 |---|---|
 | Inverter | Growatt SPH3600 (UK), two PV strings |
 | Battery | 2 × Growatt GBLI6532 (6.5 kWh each, about 12 kWh usable) |
-| Link | RS485 to Modbus TCP adapter on the inverter's RS485 port |
+| Link | Elfin EW11 RS485 to Wi-Fi adapter (Modbus TCP, port 8899) on the inverter's RS485 port |
 | HA | Home Assistant OS on an x86 mini PC |
 | Integration | [0xAHA/Growatt_ModbusTCP](https://github.com/0xAHA/Growatt_ModbusTCP) via HACS (2.0.7-b8 at the time of writing) |
 | Optimiser | Predbat add-on, `inverter_type: GROWATTSPH` |
@@ -85,8 +85,10 @@ including the six extra time slots that newer firmware enables.
 
 ## Setup outline
 
-1. **Modbus link.** Fit an RS485 to Modbus TCP adapter to the inverter, give it a
-   fixed IP, and check you can read registers.
+1. **Modbus link.** Fit an RS485 to Modbus TCP adapter to the inverter's RS485
+   port. This build uses an **Elfin EW11** on Wi-Fi, with the integration
+   connecting to port 8899. Give the adapter a fixed IP (a DHCP reservation is
+   fine) and check you can read registers before going further.
 2. **Integration.** Install `0xAHA/Growatt_ModbusTCP` from HACS and add your
    inverter. Leave VPP control authority **off** and protocol variant on **Auto**.
    Check your entity names in Developer Tools → States. This repo uses the
