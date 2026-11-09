@@ -48,9 +48,10 @@ input_number:
     step: 10
     unit_of_measurement: "W"
     mode: box
-  # apps.yaml points discharge_rate here, so Predbat's discharge rate is NOT
-  # passed to the inverter (the inverter keeps its own setting). Point
-  # discharge_rate at predbat_growatt_discharge_rate_w instead if you want it bridged.
+  # Deliberate: apps.yaml points discharge_rate here, a helper nothing passes on,
+  # so Predbat does NOT control the discharge rate. The inverter's own discharge
+  # rate is set to max and left there. If you want Predbat to control it, point
+  # discharge_rate at predbat_growatt_discharge_rate_w (the bridge then converts it).
   predbat_growatt_discharge_rate_fixed:
     name: "Predbat Growatt Discharge Rate (fixed)"
     min: 0
