@@ -82,13 +82,15 @@ including the six extra time slots that newer firmware enables.
 | `tools/check_predbat_writes.py` | Reads Predbat's log and lists what Predbat decided, to cross-check with the above. |
 | `tools/extract_window.py` | Cuts a time window out of the Predbat log. |
 | `docs/register-map.md` | TOU slot registers, time encoding, rules. |
+| `docs/ew11-setup.md` | Elfin EW11 serial and socket settings. |
 
 ## Setup outline
 
 1. **Modbus link.** Fit an RS485 to Modbus TCP adapter to the inverter's RS485
    port. This build uses an **Elfin EW11** on Wi-Fi, with the integration
-   connecting to port 8899. Give the adapter a fixed IP (a DHCP reservation is
-   fine) and check you can read registers before going further.
+   connecting to port 8899. Its full settings are in
+   [docs/ew11-setup.md](docs/ew11-setup.md). Give the adapter a fixed IP (a DHCP
+   reservation is fine) and check you can read registers before going further.
 2. **Integration.** Install `0xAHA/Growatt_ModbusTCP` from HACS and add your
    inverter. Leave VPP control authority **off** and protocol variant on **Auto**.
    Check your entity names in Developer Tools → States. This repo uses the
