@@ -193,8 +193,9 @@ including the six extra time slots that newer firmware enables.
    same helpers in the UI). Restart HA.
 4. **Automations.** Copy the automations in, and replace
    `YOUR_GROWATT_DEVICE_ID` with your inverter's device ID (Settings → Devices →
-   your inverter, the ID in the URL) and `notify.mobile_app_your_phone` with
-   your phone's notify service.
+   your inverter, the ID in the URL) and `YOUR_PHONE_DEVICE_ID` in `notifications.yaml` with your phone's
+   device ID (see the comment at the top of that file for why it's a device
+   ID and not the `notify.mobile_app_...` name).
 5. **Test before Predbat.** Set a helper pair by hand to a harmless window, in
    **one** `input_datetime.set_datetime` call per helper. Check the automation
    trace, the HA log (`[WRITE_MULTI]` and `[WRITE VERIFY]` lines) and the

@@ -1,5 +1,16 @@
-# Phone notifications. Replace notify.mobile_app_your_phone with your own
-# (Developer Tools -> Actions, search notify.mobile_app).
+# Phone notifications.
+#
+# These use the mobile_app DEVICE action (device_id / domain / type: notify),
+# not the notify.mobile_app_<name> action. The notify action's name comes from
+# the device name the Companion app registers, and the app can change it on
+# re-registration (here it flipped between mobile_app_pixel_7_pro and
+# mobile_app_home_assistant), breaking every automation that uses the name.
+# The device ID stays the same.
+#
+# Replace YOUR_PHONE_DEVICE_ID with your phone's device ID
+# (Settings -> Devices -> your phone -> the ID in the URL), or build one action
+# in the automation editor (Add action -> Device -> your phone -> Send a
+# notification) and copy its device_id. Reload automations after editing.
 
 - id: '1786727055747'
   alias: Low Battery Alert
@@ -11,14 +22,15 @@
       minutes: 1
   conditions: []
   actions:
-  - action: notify.mobile_app_your_phone
+  - device_id: YOUR_PHONE_DEVICE_ID
+    domain: mobile_app
+    type: notify
     continue_on_error: true
-    data:
-      title: Low Battery
-      message: 'Battery is below 20% ({{ states(''sensor.growatt_battery_battery_soc'')
-        }}% remaining)
+    title: Low Battery
+    message: 'Battery is below 20% ({{ states(''sensor.growatt_battery_battery_soc'')
+      }}% remaining)
 
-        '
+      '
   mode: single
 - id: '1787054505112'
   alias: Growatt Modbus Connection Lost
@@ -30,13 +42,15 @@
       minutes: 5
   conditions: []
   actions:
-  - action: notify.mobile_app_your_phone
-    data:
-      title: ⚠️ Growatt Modbus Offline
-      message: 'Local inverter connection has been down for 5+ minutes. Predbat is
-        likely running on stale data and unable to control the inverter.
+  - device_id: YOUR_PHONE_DEVICE_ID
+    domain: mobile_app
+    type: notify
+    continue_on_error: true
+    title: ⚠️ Growatt Modbus Offline
+    message: 'Local inverter connection has been down for 5+ minutes. Predbat is
+      likely running on stale data and unable to control the inverter.
 
-        '
+      '
   mode: single
 - id: '1787061291568'
   alias: Growatt Modbus Connection Restored
@@ -51,10 +65,12 @@
 
       '
   actions:
-  - action: notify.mobile_app_your_phone
-    data:
-      title: ✅ Growatt Modbus Restored
-      message: Local inverter connection is back online.
+  - device_id: YOUR_PHONE_DEVICE_ID
+    domain: mobile_app
+    type: notify
+    continue_on_error: true
+    title: ✅ Growatt Modbus Restored
+    message: Local inverter connection is back online.
   mode: single
 - id: '1792078674482'
   alias: Predbat status notification
@@ -77,13 +93,14 @@
 
       '
   actions:
-  - action: notify.mobile_app_your_phone
+  - device_id: YOUR_PHONE_DEVICE_ID
+    domain: mobile_app
+    type: notify
     continue_on_error: true
-    data:
-      title: Predbat
-      message: 'Predbat status change to: {{ ''Free Running'' if trigger.to_state.state
-        == ''Demand'' else trigger.to_state.state }}{{ '' '' ~ trigger.to_state.attributes.get(''detail'')
-        if trigger.to_state.attributes.get(''detail'') else '''' }}
+    title: Predbat
+    message: 'Predbat status change to: {{ ''Free Running'' if trigger.to_state.state
+      == ''Demand'' else trigger.to_state.state }}{{ '' '' ~ trigger.to_state.attributes.get(''detail'')
+      if trigger.to_state.attributes.get(''detail'') else '''' }}
 
-        '
+      '
   mode: queued
