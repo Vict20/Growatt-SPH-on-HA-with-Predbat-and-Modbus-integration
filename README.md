@@ -71,7 +71,7 @@ moved to local Modbus. The cloud integration is no longer used. The reasons:
 | Optimiser | Predbat add-on, `inverter_type: GROWATTSPH` |
 | Tariff | Octopus Intelligent import, Agile export |
 | Forecast | Solcast (hobbyist account) |
-| EVs | Ohme charger, plus a second EV on its own feed metered by an emonPi |
+| EVs (optional, my setup) | Ohme charger, plus a second EV on its own feed metered by an emonPi |
 
 ## What each part does, and why
 
@@ -83,7 +83,7 @@ moved to local Modbus. The cloud integration is no longer used. The reasons:
 | [Predbat](https://github.com/springfall2008/batpred) add-on | Plans charge, export and hold every 5 minutes from prices, solar forecast, load history and car charging. | It's the brain. It has a `GROWATTSPH` inverter profile, but this setup routes its window writes through helpers (see above). |
 | Solcast (inside Predbat, via API key) | Solar forecast. | Predbat needs the forecast to decide how much to buy overnight. Polled every 4 h to stay within the free API quota. |
 | Octopus (inside Predbat, via API key and account) | Import and export rates, Intelligent dispatch slots, saving sessions. | Predbat plans around actual prices, including extra cheap slots when the car charges. The separate Octopus Energy HA integration is also installed here but is optional. |
-| Ohme (HA integration, plus Predbat's own Ohme login) | Car charging power and plan. | Predbat needs to know when the car takes energy. Otherwise it misreads car charging as house load, or plans the battery against it. |
+| Ohme (optional; my charger, HA integration plus Predbat's own Ohme login) | Car charging power and plan. | Only needed if you have an Ohme. Predbat needs to know when the car takes energy, otherwise it misreads car charging as house load or plans the battery against it. Other chargers work too; see Predbat's car charging docs. Without an EV, delete the `ohme_*` and `car_charging_*` lines from `apps.yaml` and set `num_cars: 0`. |
 | emoncms / emonPi (optional) | Meters the second EV feed, which doesn't pass through the Growatt's load measurement. | That car is invisible to the inverter, so it's measured separately. |
 | ESPHome (optional) | Runs the desk display. | Shows at a glance what the battery and Predbat are doing. |
 

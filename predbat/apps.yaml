@@ -100,6 +100,9 @@ pred_bat:
   solcast_sites:
     - 'xxxx-xxxx-xxxx-xxxx'   # your Solcast rooftop site ID
 
+  # --- EV charging (OPTIONAL: this is my Ohme charger) ---
+  # No EV? Delete this block and set num_cars: 0.
+  # Different charger? See Predbat's car charging docs.
   ohme_login: !secret ohme_username
   ohme_password: !secret ohme_password
   ohme_automatic: true
