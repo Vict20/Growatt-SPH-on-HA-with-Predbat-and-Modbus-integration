@@ -194,9 +194,9 @@ including the six extra time slots that newer firmware enables.
    same helpers in the UI). Restart HA.
 4. **Automations.** Copy the automations in, and replace
    `YOUR_GROWATT_DEVICE_ID` with your inverter's device ID (Settings → Devices →
-   your inverter, the ID in the URL) and add `homeassistant/scripts/notify_phone.yaml` to your scripts, replacing
-   `YOUR_PHONE_DEVICE_ID` with your phone's device ID. All phone alerts go
-   through that one script (the comment in it explains why).
+   your inverter, the ID in the URL) and add `homeassistant/scripts/notify_phone.yaml` to your scripts. All phone
+   alerts go through that one script, which finds your phone by itself (the
+   comment in it explains why).
 5. **Test before Predbat.** Set a helper pair by hand to a harmless window, in
    **one** `input_datetime.set_datetime` call per helper. Check the automation
    trace, the HA log (`[WRITE_MULTI]` and `[WRITE VERIFY]` lines) and the

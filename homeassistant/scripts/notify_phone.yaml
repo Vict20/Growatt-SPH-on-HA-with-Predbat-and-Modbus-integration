@@ -1,23 +1,26 @@
 # One script that every phone alert goes through. Add it to scripts.yaml
-# (or create it in the UI). Replace YOUR_PHONE_DEVICE_ID with your phone's
-# device ID (Settings -> Devices -> your phone -> the ID in the URL), then
-# reload scripts and automations.
+# (or create it in the UI), then reload scripts and automations.
+# No editing needed: it finds your phone itself.
 #
-# Why a script: the Companion app's identity in HA is not stable.
+# Why: the Companion app's identity in HA is not stable.
 #  - The notify.mobile_app_<name> action is named after the device name the
 #    app registers. If the app re-registers under a different name, the action
 #    disappears ("unknown action").
-#  - The device ID survives a rename, but not a fresh registration of the app
-#    (HA can create or restore a different device: "Unknown device").
-# Both happened here within two days. With every alert routed through this
-# script, the fix is one line in one place. Either form works below: the
-# device action, or `action: notify.mobile_app_<name>` with title/message data.
+#  - A device-ID based action survives a rename, but not a fresh registration
+#    (HA can restore or create a different device: "Unknown device").
+# Here the app re-registered three times in two days, alternating between two
+# names, and broke both approaches. So this script works the action out at run
+# time: notify.mobile_app_ + the slugified name of whichever mobile_app device
+# currently exists.
+#
+# Assumes ONE phone with the Companion app. With several, replace the variable
+# with a fixed action such as notify.mobile_app_your_phone.
 
 notify_phone:
   alias: Notify phone
   description: >-
-    All phone alerts go through here. If notifications stop after the
-    Companion app re-registers, fix the phone here only.
+    All phone alerts go through here. The notify action is worked out at run
+    time from the mobile_app device that currently exists.
   fields:
     title:
       description: Notification title
@@ -26,9 +29,14 @@ notify_phone:
       description: Notification text
       example: Test
   sequence:
-  - device_id: YOUR_PHONE_DEVICE_ID
-    domain: mobile_app
-    type: notify
-    title: "{{ title | default('') }}"
-    message: "{{ message }}"
+  - variables:
+      phone_service: >-
+        {% set ents = integration_entities('mobile_app') | list %}
+        {% if ents | count > 0 and device_attr(ents[0], 'name') %}notify.mobile_app_{{ device_attr(ents[0], 'name') | slugify }}{% endif %}
+  - condition: template
+    value_template: "{{ phone_service | length > 0 }}"
+  - action: "{{ phone_service }}"
+    data:
+      title: "{{ title | default('') }}"
+      message: "{{ message }}"
   mode: parallel
