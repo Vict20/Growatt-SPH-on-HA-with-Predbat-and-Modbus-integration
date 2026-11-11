@@ -1,0 +1,34 @@
+# One script that every phone alert goes through. Add it to scripts.yaml
+# (or create it in the UI). Replace YOUR_PHONE_DEVICE_ID with your phone's
+# device ID (Settings -> Devices -> your phone -> the ID in the URL), then
+# reload scripts and automations.
+#
+# Why a script: the Companion app's identity in HA is not stable.
+#  - The notify.mobile_app_<name> action is named after the device name the
+#    app registers. If the app re-registers under a different name, the action
+#    disappears ("unknown action").
+#  - The device ID survives a rename, but not a fresh registration of the app
+#    (HA can create or restore a different device: "Unknown device").
+# Both happened here within two days. With every alert routed through this
+# script, the fix is one line in one place. Either form works below: the
+# device action, or `action: notify.mobile_app_<name>` with title/message data.
+
+notify_phone:
+  alias: Notify phone
+  description: >-
+    All phone alerts go through here. If notifications stop after the
+    Companion app re-registers, fix the phone here only.
+  fields:
+    title:
+      description: Notification title
+      example: Predbat
+    message:
+      description: Notification text
+      example: Test
+  sequence:
+  - device_id: YOUR_PHONE_DEVICE_ID
+    domain: mobile_app
+    type: notify
+    title: "{{ title | default('') }}"
+    message: "{{ message }}"
+  mode: parallel

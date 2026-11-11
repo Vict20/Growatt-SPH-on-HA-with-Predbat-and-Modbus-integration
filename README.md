@@ -168,6 +168,7 @@ including the six extra time slots that newer firmware enables.
 | `homeassistant/automations/rate_bridges.yaml` | W to % rate bridges. |
 | `homeassistant/automations/clock_sync.yaml` | Weekly inverter clock sync. |
 | `homeassistant/automations/notifications.yaml` | Low battery, Modbus lost/restored, Predbat status to phone. |
+| `homeassistant/scripts/notify_phone.yaml` | The single script every phone alert calls, so the phone is configured in one place. |
 | `homeassistant/automations/diagnostics_dusk_capture.yaml` | Optional read-only register capture. |
 | `predbat/apps.yaml` | Predbat config for GROWATTSPH with the helpers above (secrets removed). |
 | `esphome/growatt-monitor.yaml` | Optional desk display on an ESP32 "Cheap Yellow Display". |
@@ -193,9 +194,9 @@ including the six extra time slots that newer firmware enables.
    same helpers in the UI). Restart HA.
 4. **Automations.** Copy the automations in, and replace
    `YOUR_GROWATT_DEVICE_ID` with your inverter's device ID (Settings → Devices →
-   your inverter, the ID in the URL) and `YOUR_PHONE_DEVICE_ID` in `notifications.yaml` with your phone's
-   device ID (see the comment at the top of that file for why it's a device
-   ID and not the `notify.mobile_app_...` name).
+   your inverter, the ID in the URL) and add `homeassistant/scripts/notify_phone.yaml` to your scripts, replacing
+   `YOUR_PHONE_DEVICE_ID` with your phone's device ID. All phone alerts go
+   through that one script (the comment in it explains why).
 5. **Test before Predbat.** Set a helper pair by hand to a harmless window, in
    **one** `input_datetime.set_datetime` call per helper. Check the automation
    trace, the HA log (`[WRITE_MULTI]` and `[WRITE VERIFY]` lines) and the
