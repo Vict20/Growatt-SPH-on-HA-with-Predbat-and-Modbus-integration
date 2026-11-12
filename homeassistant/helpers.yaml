@@ -102,6 +102,7 @@ recorder:
       - predbat.soc_kw
       - predbat.metric
       - predbat.base10_metric
+      - predbat.plan_history
 
 # --- Logging -------------------------------------------------------------------
 # Debug logging is what tools/check_growatt_writes.py reads ([WRITE_MULTI] lines).
@@ -110,9 +111,11 @@ logger:
   default: warning
   logs:
     custom_components.growatt_modbus: debug
-  # These two must stay recorded (Predbat reads their history), so hide the
-  # size warning instead of excluding them.
+  # These must stay recorded (Predbat reads their history, or keeps only the
+  # current value anyway), so hide the size warning instead of excluding them.
   filters:
     homeassistant.components.recorder.db_schema:
       - "State attributes for predbat.cost_yesterday exceed maximum size"
       - "State attributes for predbat.savings_yesterday_predbat exceed maximum size"
+      - "State attributes for predbat.soc_kw_best exceed maximum size"
+      - "State attributes for sensor.predbat_billing exceed maximum size"
