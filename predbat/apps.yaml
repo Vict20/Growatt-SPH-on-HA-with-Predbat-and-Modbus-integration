@@ -121,11 +121,9 @@ pred_bat:
   
   battery_scaling_auto: true
 
-  # Tariff comparison feature
-  #
-  # Adjust this list to the tariffs you want to compare, include your current tariff also
-  # DNO region code (see https://energy-stats.uk/dno-region-codes-explained/)
-  dno_region: "A"
+  # Optional: compare your tariff against others. List your own tariff too.
+  # DNO region letter for your area (see https://energy-stats.uk/dno-region-codes-explained/)
+  dno_region: "X"   # replace with your region letter
   compare_list:
   - id: 'current'
     name: 'Current Tariff'

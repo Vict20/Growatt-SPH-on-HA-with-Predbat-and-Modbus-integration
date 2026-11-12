@@ -9,10 +9,14 @@ This has run day to day since 10 October 2026 with every register write landing
 (0 rejected across hundreds of writes). It's shared as a worked example, not as
 a finished product. Read it, understand it, and adapt it to your system.
 
-> ⚠️ **You're writing to your inverter's registers.** A wrong value can stop
-> charging, cause unwanted export, or leave a slot enabled that you didn't
-> intend. Test on a harmless time window first and watch the result in the
-> Growatt app. No warranty.
+> ⚠️ **Use at your own risk. You're writing to your inverter's registers.**
+> A wrong value can stop charging, cause unwanted export, leave a slot enabled
+> that you didn't intend, or put the inverter in a state you can't easily undo.
+> Writing registers that Growatt's own app doesn't expose may affect your
+> warranty. Test on a harmless time window first, watch the result in the
+> Growatt app, and keep a record of the original register values.
+> Provided as is, with no warranty (see [LICENSE](LICENSE)). Not affiliated with
+> or endorsed by Growatt, Predbat, Octopus Energy, Ohme or Elfin.
 
 ## Background: the problem this solves
 
@@ -171,7 +175,7 @@ including the six extra time slots that newer firmware enables.
 | `homeassistant/scripts/notify_phone.yaml` | The single script every phone alert calls, so the phone is configured in one place. |
 | `homeassistant/automations/diagnostics_dusk_capture.yaml` | Optional read-only register capture. |
 | `predbat/apps.yaml` | Predbat config for GROWATTSPH with the helpers above (secrets removed). |
-| `esphome/growatt-monitor.yaml` | Optional desk display on an ESP32 "Cheap Yellow Display". |
+| `esphome/growatt-monitor.yaml` | Optional desk display on an ESP32 "Cheap Yellow Display". Config-validated only, not yet tested on hardware. |
 | `tools/check_growatt_writes.py` | Reads the HA log and lists every register write, landed or rejected. |
 | `tools/check_predbat_writes.py` | Reads Predbat's log and lists what Predbat decided, to cross-check with the above. |
 | `tools/extract_window.py` | Cuts a time window out of the Predbat log. |
@@ -202,13 +206,44 @@ including the six extra time slots that newer firmware enables.
    trace, the HA log (`[WRITE_MULTI]` and `[WRITE VERIFY]` lines) and the
    Growatt app. Then set start = end to disable it again.
 6. **Predbat.** Install the add-on, copy `predbat/apps.yaml` across, fill in
-   your keys (`!secret`), Octopus account, Solcast site and battery size, then
+   your keys (`!secret`), Octopus account, Solcast site, DNO region and battery size, then
    start it in read-only mode first and check the plan before letting it control.
 7. **Verify.** After a night, download the HA log and run
    `python tools/check_growatt_writes.py home-assistant.log`, then
    `python tools/check_predbat_writes.py predbat.log`. As a rule, each Predbat
    decision should match one register write a few seconds later, plus the
    disable-first writes. Expect 0 rejected.
+
+## Findings that may help other Growatt SPH integrations
+
+Observed on this UK SPH3600 (firmware after Growatt's 22 Oct 2026 remote update),
+over local Modbus. Behaviour on other models, firmware or the cloud API may differ.
+
+- **Overlapping TOU slots are refused.** A write that would leave any two slots
+  overlapping fails with Modbus exception code 4, and nothing in that write is
+  applied. Writing start and end separately can create a brief overlap, so the
+  window gets refused; writing `[start, end, enable]` in one multi-register
+  write avoids it.
+- **Clear the other slot first, only on a real overlap.** Writing the clashing
+  slot `[0, 0, 0]`, then the new window about 2 s later, has never been refused here.
+- **Time encoding** is `hour * 256 + minute` (for example 23:30 = 5918).
+- **Predbat clears a window by writing equal start and end** (currently
+  00:00:00). Treating start == end as "disable the slot" works well.
+- **Predbat doesn't clear a window when it ends.** The slot stays enabled until
+  the next plan change.
+- **Plans churn.** Marginal exports and charge holds can switch every 5-minute
+  cycle. Skipping writes that wouldn't change the register value cuts most of
+  the traffic.
+- **SOC limits are single registers** that can't overlap: 1091 charge stop SOC
+  and 1071 discharge stop SOC. A hold is either one set to the current SOC.
+- **Charge freeze and discharge freeze aren't supported** by the `GROWATTSPH`
+  profile (Predbat logs this).
+- **Clock.** TOU slots run on the inverter's own clock, so it's synced weekly.
+- **Newer firmware adds six more slots** (Battery First 4-6, Grid First 4-6)
+  at different addresses. See [docs/register-map.md](docs/register-map.md).
+- **Don't write H1008** (VPP / control authority).
+- **Track record:** since 10 Oct 2026 every write has landed, 0 rejected,
+  checked against the HA log with `tools/check_growatt_writes.py`.
 
 ## Gotchas
 
@@ -240,3 +275,11 @@ including the six extra time slots that newer firmware enables.
   fixed the new-slot register layout after this setup reported it.
 - ESPHome display based on
   [CYD-ESPHome-HA-Monitor](https://github.com/element-software/CYD-ESPHome-HA-Monitor).
+
+## Licence
+
+MIT, see [LICENSE](LICENSE). This covers the files in this repo only.
+Predbat, the Growatt_ModbusTCP integration and ESPHome are separate projects
+under their own licences; `predbat/apps.yaml` is a personal configuration for
+Predbat, not part of Predbat itself. The ESPHome display config is based on
+Element Software's MIT-licensed CYD generator (notice kept in the file).
