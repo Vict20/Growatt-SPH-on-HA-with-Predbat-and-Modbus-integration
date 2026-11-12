@@ -83,12 +83,14 @@ template:
              - (states('sensor.growatt_grid_grid_import_power') | float(0)) }}
 
 # --- Keep the database small ---------------------------------------------------
-# Predbat's plan entities carry very large attributes; don't record them.
+# Predbat's plan entities carry very large attributes; don't record the ones
+# Predbat doesn't read back. Check Predbat's FAQ ("exceed maximum size") before
+# adding more: Predbat needs the history of e.g. predbat.soc_kw_best,
+# predbat.cost_today, predbat.cost_yesterday, predbat.savings_yesterday_predbat.
 recorder:
   exclude:
     entities:
       - predbat.plan_html
-      - predbat.soc_kw_best
       - predbat.battery_cycle_best
       - predbat.best_load_energy
       - predbat.load_energy
@@ -98,6 +100,8 @@ recorder:
       - predbat.load_power_best
       - predbat.battery_cycle
       - predbat.soc_kw
+      - predbat.metric
+      - predbat.base10_metric
 
 # --- Logging -------------------------------------------------------------------
 # Debug logging is what tools/check_growatt_writes.py reads ([WRITE_MULTI] lines).
@@ -106,3 +110,9 @@ logger:
   default: warning
   logs:
     custom_components.growatt_modbus: debug
+  # These two must stay recorded (Predbat reads their history), so hide the
+  # size warning instead of excluding them.
+  filters:
+    homeassistant.components.recorder.db_schema:
+      - "State attributes for predbat.cost_yesterday exceed maximum size"
+      - "State attributes for predbat.savings_yesterday_predbat exceed maximum size"
